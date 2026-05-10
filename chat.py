@@ -35,7 +35,10 @@ from telegram.ext import (
 from telegram.constants import ParseMode
 
 # === CONFIG ===
-BOT_TOKEN = "8272652146:AAEQeMESnP92ukp1gToWtE7XMJ7P77xswco"
+BOT_TOKEN = os.getenv("BOT_TOKEN", "8272652146:AAEQeMESnP92ukp1gToWtE7XMJ7P77xswco")
+
+if not BOT_TOKEN:
+    raise ValueError("BOT_TOKEN environment variable is not set!")
 
 # Logging
 logging.basicConfig(
