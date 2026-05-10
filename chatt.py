@@ -5,6 +5,10 @@ import logging
 import traceback
 from datetime import datetime
 
+# DEBUG: Check BOT_TOKEN
+print(f"DEBUG: BOT_TOKEN is set: {bool(os.environ.get('BOT_TOKEN'))}")
+print(f"DEBUG: BOT_TOKEN value: {os.environ.get('BOT_TOKEN', 'NOT SET')[:20]}...")
+
 from telegram import (
     Update,
     InlineKeyboardButton,
