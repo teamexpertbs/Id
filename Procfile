@@ -1,1 +1,1 @@
-worker: python chatt.py
+web: python chatt.py
