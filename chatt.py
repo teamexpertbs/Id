@@ -5,10 +5,6 @@ import logging
 import traceback
 from datetime import datetime
 
-# DEBUG: Check BOT_TOKEN
-print(f"DEBUG: BOT_TOKEN is set: {bool(os.environ.get('BOT_TOKEN'))}")
-print(f"DEBUG: BOT_TOKEN value: {os.environ.get('BOT_TOKEN', 'NOT SET')[:20]}...")
-
 from telegram import (
     Update,
     InlineKeyboardButton,
@@ -27,6 +23,9 @@ from telegram.ext import (
     CallbackQueryHandler,
 )
 from telegram.constants import ParseMode
+from telegram.error import InvalidToken
+from flask import Flask, request
+import json
 
 # ─── CONFIG ───────────────────────────────────────────────────────────[...]
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "").strip()
@@ -34,12 +33,18 @@ if not BOT_TOKEN:
     print("FATAL: BOT_TOKEN environment variable not set.")
     sys.exit(1)
 
+# Flask app
+flask_app = Flask(__name__)
+
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO,
 )
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
+
+# Telegram app (global)
+app = None
 
 
 # ─── UTILS ───────────────────────────────────────────────────────────…[...]
@@ -454,7 +459,27 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
     logger.error(tb)
 
 
-def main() -> None:
+# ─── FLASK WEBHOOK ROUTES ─────────────────────────────────────────────
+@flask_app.route("/health", methods=["GET"])
+def health():
+    return {"status": "ok"}, 200
+
+
+@flask_app.route("/webhook", methods=["POST"])
+async def webhook():
+    try:
+        data = request.get_json()
+        update = Update.de_json(data, app.bot)
+        await app.process_update(update)
+        return "ok", 200
+    except Exception as e:
+        logger.error(f"Webhook error: {e}")
+        return "error", 500
+
+
+# ─── MAIN ───────────────────────────────────────────────────────────────
+async def setup_webhook():
+    global app
     app = Application.builder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
@@ -477,9 +502,17 @@ def main() -> None:
     app.add_handler(CallbackQueryHandler(callback_gate))
     app.add_error_handler(error_handler)
 
-    print("--- Elite ID Bot Started ---")
-    app.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
+    # Setup webhook
+    await app.bot.set_webhook(url=f"{os.environ.get('WEBHOOK_URL')}/webhook")
+    print("✅ Webhook set successfully!")
 
 
 if __name__ == "__main__":
-    main()
+    import asyncio
+    
+    # Setup webhook before running Flask
+    asyncio.run(setup_webhook())
+    
+    port = int(os.environ.get("PORT", 10000))
+    print(f"--- Elite ID Bot Started (Webhook Mode) on port {port} ---")
+    flask_app.run(host="0.0.0.0", port=port, debug=False)
