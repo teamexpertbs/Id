@@ -24,8 +24,8 @@ from telegram.ext import (
 )
 from telegram.constants import ParseMode
 
-# ─── CONFIG ──────────────────────────────────────────────────────────────────
-BOT_TOKEN = os.environ.get("8272652146:AAHg3JZDV3LXeYuMKS7EPVEuwMLAL65c1U4", "").strip()
+# ─── CONFIG ───────────────────────────────────────────────────────────[...]
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "").strip()
 if not BOT_TOKEN:
     print("FATAL: BOT_TOKEN environment variable not set.")
     sys.exit(1)
@@ -38,7 +38,7 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 
-# ─── UTILS ───────────────────────────────────────────────────────────────────
+# ─── UTILS ───────────────────────────────────────────────────────────…[...]
 def escape(text):
     return html.escape(str(text)) if text is not None else ""
 
@@ -143,7 +143,7 @@ def build_request_keyboard():
     return ReplyKeyboardMarkup(layout, resize_keyboard=True)
 
 
-# ─── HANDLERS ────────────────────────────────────────────────────────────────
+# ─── HANDLERS ──────────────────────────────────────────────────────────[...]
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
 
